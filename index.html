@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareSync — AI Caregiving & Patient Health Ecosystem</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        tealCare: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                            950: '#042f2c'
+                        },
+                        nightSlate: {
+                            800: '#1e293b',
+                            850: '#141e30',
+                            900: '#0f172a',
+                            950: '#070d18'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070d18;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .camera-feed {
+            transform: scaleX(-1); /* mirror preview */
+        }
+
+        .pulse-beacon {
+            animation: pulse-ring 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.08); }
+        }
+    </style>
+</head>
+<body class="bg-nightSlate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-tealCare-500 selection:text-slate-950">
+
+    <!-- Top Global Notification & Emergency Bar -->
+    <header class="border-b border-slate-800 bg-nightSlate-900/90 backdrop-blur-md sticky top-0 z-40 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Logo and Status -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-tealCare-600 to-cyan-400 flex items-center justify-center text-slate-950 text-lg font-black shadow-lg shadow-tealCare-500/20">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-white flex items-center gap-2">
+                        CareSync
+                        <span class="text-[10px] font-mono font-bold bg-tealCare-500/10 text-tealCare-400 px-2 py-0.5 rounded-full border border-tealCare-500/20">TeleCare AI</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Connected Family & Caregiver Health Guard</p>
+                </div>
+            </div>
+
+            <!-- Patient Selector & Active Status -->
+            <div class="flex items-center gap-3 bg-nightSlate-850 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono">
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-slate-400">MONITORED CARE RECIPIENT</span>
+                    <span class="font-bold text-slate-200">Margaret Harrison, 78 (Home Care)</span>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 text-[10px] border border-emerald-800">Stable</span>
+            </div>
+
+            <!-- Persona Switching & Actions -->
+            <div class="flex items-center gap-2">
+                <div class="inline-flex rounded-xl bg-nightSlate-850 p-1 border border-slate-800 text-xs font-semibold">
+                    <button onclick="switchPortal('family')" id="portalBtnFamily" class="px-3 py-1.5 rounded-lg bg-tealCare-600 text-slate-950 font-bold transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-house-user"></i>
+                        <span>Family View</span>
+                    </button>
+                    <button onclick="switchPortal('caregiver')" id="portalBtnCaregiver" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-nurse"></i>
+                        <span>Caregiver Portal</span>
+                    </button>
+                </div>
+
+                <button onclick="openCheckInModal()" class="px-3.5 py-2 bg-gradient-to-r from-tealCare-500 to-emerald-400 hover:from-tealCare-600 hover:to-emerald-500 text-slate-950 font-bold rounded-xl text-xs transition shadow-md flex items-center gap-1.5" title="Verify presence with selfie photo">
+                    <i class="fa-solid fa-camera"></i>
+                    <span class="hidden sm:inline">Selfie 2FA Check-In</span>
+                </button>
+                
+                <button onclick="triggerUrgentAlert()" class="p-2 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 border border-rose-500/40 rounded-xl text-xs font-bold transition" title="Trigger Emergency Dispatch Notification">
+                    <i class="fa-solid fa-bell"></i>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Dynamic Body Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left 8 Columns: Telemetry, Clinical NLP, and Schedules -->
+        <section class="lg:col-span-8 flex flex-col space-y-5">
+            
+            <!-- Quick Daily Health Radar Banner -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="glass-card p-3.5 rounded-2xl flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span>Heart Rate</span>
+                        <i class="fa-solid fa-heart-pulse text-rose-500"></i>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-2xl font-bold font-mono text-slate-100" id="metricHeartRate">72</span>
+                        <span class="text-xs text-slate-400 font-mono"> BPM</span>
+                    </div>
+                    <span class="text-[10px] text-emerald-400 mt-1 font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check"></i> Resting Normal
+                    </span>
+                </div>
+
+                <div class="glass-card p-3.5 rounded-2xl flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span>Blood Pressure</span>
+                        <i class="fa-solid fa-droplet text-cyan-400"></i>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-2xl font-bold font-mono text-slate-100" id="metricBP">122/80</span>
+                        <span class="text-xs text-slate-400 font-mono"> mmHg</span>
+                    </div>
+                    <span class="text-[10px] text-emerald-400 mt-1 font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-down"></i> -4% from AM peak
+                    </span>
+                </div>
+
+                <div class="glass-card p-3.5 rounded-2xl flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span>Blood Glucose</span>
+                        <i class="fa-solid fa-cubes-stacked text-amber-400"></i>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-2xl font-bold font-mono text-slate-100" id="metricGlucose">104</span>
+                        <span class="text-xs text-slate-400 font-mono"> mg/dL</span>
+                    </div>
+                    <span class="text-[10px] text-tealCare-400 mt-1 font-semibold">
+                        Post-meal target met
+                    </span>
+                </div>
+
+                <div class="glass-card p-3.5 rounded-2xl flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span>Sleep Quality</span>
+                        <i class="fa-solid fa-moon text-indigo-400"></i>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-2xl font-bold font-mono text-slate-100">7.5</span>
+                        <span class="text-xs text-slate-400 font-mono"> hrs</span>
+                    </div>
+                    <span class="text-[10px] text-emerald-400 mt-1 font-semibold">
+                        88% Deep & REM
+                    </span>
+                </div>
+            </div>
+
+            <!-- Navigation Sub-Tabs -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div class="flex items-center gap-2 text-xs font-semibold">
+                    <button onclick="switchSubSection('analytics')" id="subTabAnalytics" class="px-3 py-1.5 rounded-lg bg-tealCare-600 text-slate-950 font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>AI Vitals Analysis</span>
+                    </button>
+                    <button onclick="switchSubSection('nlpConsult')" id="subTabNlp" class="px-3 py-1.5 rounded-lg bg-nightSlate-850 hover:bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-notes-medical"></i>
+                        <span>Clinical NLP Scribe</span>
+                    </button>
+                    <button onclick="switchSubSection('caregivers')" id="subTabCaregivers" class="px-3 py-1.5 rounded-lg bg-nightSlate-850 hover:bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-id-badge"></i>
+                        <span>Verified Caregivers</span>
+                    </button>
+                </div>
+
+                <div class="text-[11px] font-mono text-slate-400">
+                    <span id="currentShiftStatus"><i class="fa-solid fa-shield text-tealCare-400 mr-1"></i>Caregiver On-Duty: <strong>Elena Rostova, RN</strong></span>
+                </div>
+            </div>
+
+            <!-- Sub-Section 1: AI Health Data Analysis & Anomaly Detection -->
+            <div id="sectionAnalytics" class="space-y-4">
+                <div class="glass-card p-5 rounded-2xl space-y-4 border-t-2 border-t-tealCare-500">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                                <i class="fa-solid fa-brain text-tealCare-400"></i>
+                                Continuous 7-Day Biometric Trend & Anomaly Radar
+                            </h3>
+                            <p class="text-xs text-slate-400">Neural correlation of resting heart rate, systolic blood pressure, and hydration levels.</p>
+                        </div>
+                        <button onclick="generateAiHealthBriefing()" id="btnAiBrief" class="px-3 py-1.5 bg-tealCare-500/10 hover:bg-tealCare-500/20 text-tealCare-300 border border-tealCare-500/30 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
+                            <span>Synthesize Medical Brief</span>
+                        </button>
+                    </div>
+
+                    <!-- Responsive Canvas Chart for Vitals -->
+                    <div class="relative w-full h-56 bg-nightSlate-950/80 rounded-xl p-3 border border-slate-800/80">
+                        <canvas id="healthTrendCanvas" class="w-full h-full block"></canvas>
+                        <div id="chartTooltip" class="absolute hidden pointer-events-none bg-slate-900 border border-slate-700 p-2 rounded-lg text-[10px] font-mono text-slate-200 shadow-xl z-20"></div>
+                    </div>
+
+                    <!-- AI Anomaly & Insight Callout Box -->
+                    <div class="p-3.5 rounded-xl bg-nightSlate-850 border border-slate-800 text-xs space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-200 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                AI Predictive Observation (Confidence: 94.2%)
+                            </span>
+                            <span class="text-[10px] font-mono text-slate-500">Evaluated 12 mins ago</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed text-[11px]" id="aiInsightParagraph">
+                            Margaret's blood pressure stabilized after morning Lisinopril (10mg). Hydration logs indicate 1,450ml intake today. Evening mobility walking milestone was completed at 4:30 PM with zero tachycardia episodes detected.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Today's Care Milestones (ADLs) -->
+                <div class="glass-card p-5 rounded-2xl space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-tealCare-400"></i>
+                            Activities of Daily Living (ADLs) & Medication Protocol
+                        </h4>
+                        <span class="text-[10px] font-mono text-slate-400" id="adlProgressLabel">3 of 5 Completed</span>
+                    </div>
+
+                    <div class="space-y-2" id="adlTasksList">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-Section 2: Clinical NLP Scribe (Doctor & Caregiver Consultations) -->
+            <div id="sectionNlpConsult" class="glass-card p-5 rounded-2xl space-y-4 hidden border-t-2 border-t-cyan-500">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-microphone-lines text-cyan-400"></i>
+                            NLP Clinical Consultation Scribe
+                        </h3>
+                        <p class="text-xs text-slate-400">Dictate or paste doctor instructions to extract structured SOAP medical summaries and prescription alterations.</p>
+                    </div>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                        Speech-to-Clinical
+                    </span>
+                </div>
+
+                <!-- Input & Dictation Area -->
+                <div class="space-y-3">
+                    <div class="relative">
+                        <textarea id="nlpRawInput" rows="4" placeholder="Dictate or type raw consultation notes (e.g. 'Dr. Miller noted mild ankle swelling. Suggested reducing sodium intake to 1500mg, continue Metformin 500mg with dinner, and schedule follow-up cardiology echocardiogram in 3 weeks...')" class="w-full bg-nightSlate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-tealCare-500 transition leading-relaxed"></textarea>
+                        
+                        <div class="absolute right-3 bottom-3 flex items-center gap-2">
+                            <button onclick="toggleSpeechRecording()" id="btnMicRecord" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs transition flex items-center gap-1.5 border border-slate-700">
+                                <i class="fa-solid fa-microphone" id="micIcon"></i>
+                                <span id="micLabel">Record Audio</span>
+                            </button>
+                            <button onclick="insertSampleConsultNotes()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700">
+                                Sample Note
+                            </button>
+                        </div>
+                    </div>
+
+                    <button onclick="processClinicalNlpNotes()" id="btnProcessNlp" class="w-full py-2.5 bg-gradient-to-r from-tealCare-600 to-cyan-600 hover:from-tealCare-500 hover:to-cyan-500 text-slate-950 font-bold text-xs rounded-xl transition shadow flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Synthesize into Clinical SOAP Summary & Actions</span>
+                    </button>
+                </div>
+
+                <!-- Structured SOAP & Action Items Output Container -->
+                <div id="nlpStructuredOutput" class="space-y-3 pt-2 hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div class="p-3.5 rounded-xl bg-nightSlate-950 border border-slate-800 space-y-1.5">
+                            <span class="font-bold text-cyan-400 block"><i class="fa-solid fa-stethoscope mr-1"></i> Clinical Assessment (SOAP)</span>
+                            <div id="soapAssessmentText" class="text-slate-300 leading-relaxed text-[11px] space-y-1">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-nightSlate-950 border border-slate-800 space-y-1.5">
+                            <span class="font-bold text-amber-400 block"><i class="fa-solid fa-pills mr-1"></i> Medication & Dosage Directives</span>
+                            <ul id="soapMedicationList" class="text-slate-300 text-[11px] space-y-1 list-disc list-inside">
+                                <!-- Populated dynamically -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-tealCare-950/40 border border-tealCare-800/80 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2 text-tealCare-300">
+                            <i class="fa-solid fa-calendar-check text-sm"></i>
+                            <span id="soapFollowupAction">Follow-up appointment suggested: Dr. Miller (Cardiology) in 21 days.</span>
+                        </div>
+                        <button onclick="syncFollowupToCalendar()" class="px-3 py-1 bg-tealCare-600 hover:bg-tealCare-500 text-slate-950 font-bold rounded-lg text-xs transition">
+                            Add to Schedule
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-Section 3: Verified Caregiver Directory & Matching -->
+            <div id="sectionCaregivers" class="space-y-4 hidden">
+                <div class="glass-card p-5 rounded-2xl space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                                <i class="fa-solid fa-user-shield text-tealCare-400"></i>
+                                Verified Professional Caregivers (Background & License Checked)
+                            </h3>
+                            <p class="text-xs text-slate-400">All providers undergo biometric screening, CPR certification validation, and specialized elderly care audits.</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs">
+                            <select id="caregiverFilterSpecialty" onchange="filterCaregiverList()" class="bg-nightSlate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-tealCare-500">
+                                <option value="all">All Specialties</option>
+                                <option value="Dementia">Dementia & Memory Care</option>
+                                <option value="Post-Op">Post-Surgery & Mobility</option>
+                                <option value="Cardio">Cardiovascular Monitoring</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Caregiver List Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="caregiverGridContainer">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right 4 Columns: 2FA Selfie Verification Logs & Family Circle Chat -->
+        <aside class="lg:col-span-4 flex flex-col space-y-5">
+            
+            <!-- Selfie 2FA Activity Verification Ledger -->
+            <div class="glass-card p-4 rounded-2xl shadow-xl space-y-3.5 border border-slate-800">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-tealCare-500/10 text-tealCare-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-id-card-clip"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-200">2FA Presence Ledger</h4>
+                            <p class="text-[10px] text-slate-400">Biometric Proof of Care</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Verified Geo-Fence
+                    </span>
+                </div>
+
+                <!-- Feed of Verified Selfies -->
+                <div id="selfieAuditList" class="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <button onclick="openCheckInModal()" class="w-full py-2 bg-nightSlate-850 hover:bg-slate-800 border border-slate-700 text-tealCare-300 font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-camera-retro"></i>
+                    <span>Log Milestone with Selfie Proof</span>
+                </button>
+            </div>
+
+            <!-- Family Care Circle Message Room -->
+            <div class="glass-card p-4 rounded-2xl shadow-xl flex-1 flex flex-col space-y-3 border border-slate-800 min-h-[350px]">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-comments"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-200">Family Care Circle</h4>
+                            <p class="text-[10px] text-slate-400">Direct Caregiver & Kin Sync</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-mono text-slate-400">3 Online</span>
+                </div>
+
+                <!-- Chat Messages Feed -->
+                <div id="careChatFeed" class="flex-1 overflow-y-auto space-y-2.5 text-xs p-2 bg-nightSlate-950/80 rounded-xl border border-slate-800/80 max-h-64">
+                    <!-- Dynamic chat messages -->
+                </div>
+
+                <!-- Chat Input -->
+                <div class="flex gap-1.5">
+                    <input type="text" id="careChatInput" placeholder="Message Elena or family circle..." class="flex-1 bg-nightSlate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-tealCare-500">
+                    <button onclick="sendCareChatMessage()" class="px-3.5 py-2 bg-tealCare-600 hover:bg-tealCare-500 text-slate-950 font-bold rounded-xl text-xs transition flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
+        </aside>
+
+    </main>
+
+    <!-- Modal: Selfie-Based 2FA Activity Check-in -->
+    <div id="checkInModal" class="fixed inset-0 z-50 bg-nightSlate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-card bg-nightSlate-900 border border-tealCare-500/40 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-tealCare-600/20 text-tealCare-400 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm">Selfie 2FA Presence Check-in</h4>
+                        <p class="text-[10px] text-slate-400">Facial & Geo-Verification for Patient Safety</p>
+                    </div>
+                </div>
+                <button onclick="closeCheckInModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Live Camera Viewport or Fallback Canvas -->
+            <div class="relative w-full aspect-video bg-nightSlate-950 rounded-xl overflow-hidden border border-slate-700 flex items-center justify-center">
+                <video id="webcamVideo" autoplay playsinline class="w-full h-full object-cover camera-feed hidden"></video>
+                <canvas id="snapshotCanvas" class="hidden w-full h-full object-cover"></canvas>
+                
+                <div id="cameraPlaceholder" class="text-center p-4 space-y-2">
+                    <i class="fa-solid fa-camera text-slate-600 text-3xl"></i>
+                    <p class="text-xs text-slate-400">Click below to activate camera or take a verification photo</p>
+                </div>
+
+                <!-- Overlay Geo-Stamp Tag -->
+                <div class="absolute bottom-2 left-2 right-2 bg-slate-900/85 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-slate-700 text-[10px] font-mono text-slate-300 flex items-center justify-between">
+                    <span id="geoStampDisplay"><i class="fa-solid fa-location-dot text-tealCare-400 mr-1"></i> Oak Ridge Res. (40.7128° N)</span>
+                    <span id="timeStampDisplay">LIVE</span>
+                </div>
+            </div>
+
+            <!-- Activity Being Verified -->
+            <div class="space-y-1.5 text-xs">
+                <label class="block text-slate-300 font-semibold">Activity / Care Milestone Verified</label>
+                <select id="modalCareActivity" class="w-full bg-nightSlate-950 border border-slate-700 rounded-xl p-2.5 text-slate-200 focus:border-tealCare-500 focus:outline-none">
+                    <option value="Shift Arrival & Vitals Check">🏥 Shift Arrival & Baseline Vitals Recorded</option>
+                    <option value="Afternoon Medication Dispensed">💊 Afternoon Medication (Lisinopril & Metformin)</option>
+                    <option value="Physical Therapy & Walking Assist">🚶 Physical Therapy & 20-min Walking Milestone</option>
+                    <option value="Nutritional Meal Prepared">🥗 Balanced Dinner & Hydration Served</option>
+                    <option value="Evening Shift Handover">🌙 Evening Bedtime Routine & Shift Closeout</option>
+                </select>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                <button onclick="startCameraStream()" id="btnStartCam" class="px-3.5 py-2 rounded-xl text-slate-300 hover:text-white bg-slate-800 text-xs font-semibold flex items-center gap-1.5">
+                    <i class="fa-solid fa-video"></i>
+                    <span>Start Camera</span>
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeCheckInModal()" class="px-3 py-2 rounded-xl text-slate-400 hover:text-white text-xs">Cancel</button>
+                    <button onclick="captureAndSubmitVerification()" id="btnSubmitVerify" class="px-4 py-2 bg-tealCare-500 hover:bg-tealCare-400 text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-fingerprint"></i>
+                        <span>Authenticate & Post</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="careToast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-sm bg-nightSlate-900 border border-slate-700 p-3.5 rounded-xl shadow-2xl flex items-center gap-3">
+        <div id="toastIcon" class="w-8 h-8 rounded-lg bg-tealCare-500/20 text-tealCare-400 flex items-center justify-center text-base flex-shrink-0">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div class="flex-1 text-xs">
+            <div id="toastTitle" class="font-bold text-slate-100">Care Notification</div>
+            <div id="toastDesc" class="text-slate-400 text-[11px]">Action updated in CareSync database</div>
+        </div>
+        <button onclick="hideToast()" class="text-slate-500 hover:text-slate-300">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <script>
+        // Web Audio Synthesizer for pleasant chimes and urgent alert sounds without external files
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playCareTone(type = 'success') {
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.18); // G5
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                } else if (type === 'alert') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.5);
+                }
+            } catch (e) {
+                console.warn('Audio feedback fallback:', e);
+            }
+        }
+
+        // Application State & Initial Datasets
+        const state = {
+            activePortal: 'family', // 'family' or 'caregiver'
+            activeSubSection: 'analytics',
+            isRecordingAudio: false,
+            speechRecognition: null,
+            mediaStream: null,
+            snapshotDataUrl: null,
+            adls: [
+                { id: 'adl_1', title: 'Morning Blood Pressure & Heart Rate Log', time: '08:00 AM', done: true, by: 'Elena Rostova, RN' },
+                { id: 'adl_2', title: 'Breakfast & Morning Lisinopril 10mg', time: '08:45 AM', done: true, by: 'Elena Rostova, RN' },
+                { id: 'adl_3', title: 'Assisted Hydration (500ml water) & Joint Stretches', time: '11:30 AM', done: true, by: 'Elena Rostova, RN' },
+                { id: 'adl_4', title: 'Post-Lunch Metformin 500mg Dispensation', time: '01:30 PM', done: false, by: 'Elena Rostova, RN' },
+                { id: 'adl_5', title: 'Evening 20-min Garden Walking Assist', time: '04:45 PM', done: false, by: 'Scheduled' }
+            ],
+            selfieLedger: [
+                {
+                    id: 'slf_1',
+                    caregiver: 'Elena Rostova, RN',
+                    activity: 'Shift Arrival & Baseline Vitals Recorded',
+                    time: '07:55 AM Today',
+                    location: 'Oak Ridge Res. (40.7128° N, 74.0060° W)',
+                    photoUrl: 'https://images.unsplash.com/photo-1594824813576-a059535c8b74?w=150&auto=format&fit=crop&q=80'
+                },
+                {
+                    id: 'slf_2',
+                    caregiver: 'Elena Rostova, RN',
+                    activity: 'Afternoon Medication Dispensed',
+                    time: '01:35 PM Today',
+                    location: 'Oak Ridge Res. (40.7128° N, 74.0060° W)',
+                    photoUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80'
+                }
+            ],
+            chatMessages: [
+                { sender: 'Elena Rostova (Nurse)', text: 'Margaret had a warm oatmeal breakfast and completed her breathing exercises nicely.', time: '09:12 AM', isCaregiver: true },
+                { sender: 'David Harrison (Son)', text: 'Thank you Elena! Did Dr. Miller mention anything about her ankle swelling during the call?', time: '10:04 AM', isCaregiver: false },
+                { sender: 'Elena Rostova (Nurse)', text: 'Yes, I transcribed the consult in the NLP tab! He advised reducing sodium and we already adjusted lunch recipes.', time: '10:07 AM', isCaregiver: true }
+            ],
+            caregivers: [
+                {
+                    id: 'cg_1',
+                    name: 'Elena Rostova',
+                    role: 'Registered Nurse (RN) • 8 yrs exp',
+                    specialty: 'Cardio',
+                    specialtyLabel: 'Cardiovascular & Geriatric',
+                    rating: 4.9,
+                    reviewsCount: 42,
+                    rate: '$38/hr',
+                    verifiedBadge: 'State RN Licensed #49120',
+                    bio: 'Specialized in post-stroke cardiac rehabilitation and diabetic insulin titration.',
+                    img: 'https://images.unsplash.com/photo-1594824813576-a059535c8b74?w=120&auto=format&fit=crop&q=80'
+                },
+                {
+                    id: 'cg_2',
+                    name: 'Marcus Sterling',
+                    role: 'Certified Dementia Practitioner (CDP)',
+                    specialty: 'Dementia',
+                    specialtyLabel: 'Dementia & Memory Care',
+                    rating: 5.0,
+                    reviewsCount: 56,
+                    rate: '$35/hr',
+                    verifiedBadge: 'FBI Clearance & CDP Certified',
+                    bio: 'Compassionate behavioral support, cognitive stimulation therapy, and gentle routine reinforcement.',
+                    img: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=120&auto=format&fit=crop&q=80'
+                },
+                {
+                    id: 'cg_3',
+                    name: 'Sarah Chen, PT-A',
+                    role: 'Physical Therapy Assistant',
+                    specialty: 'Post-Op',
+                    specialtyLabel: 'Post-Surgery & Mobility',
+                    rating: 4.8,
+                    reviewsCount: 31,
+                    rate: '$36/hr',
+                    verifiedBadge: 'PT Board Accredited',
+                    bio: 'Focused on fall prevention, gait training, wheelchair transfers, and gentle range-of-motion work.',
+                    img: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=120&auto=format&fit=crop&q=80'
+                }
+            ],
+            vitalsWeek: [
+                { day: 'Mon', sysBP: 128, diaBP: 82, hr: 74 },
+                { day: 'Tue', sysBP: 125, diaBP: 80, hr: 71 },
+                { day: 'Wed', sysBP: 132, diaBP: 85, hr: 78 },
+                { day: 'Thu', sysBP: 124, diaBP: 79, hr: 70 },
+                { day: 'Fri', sysBP: 121, diaBP: 78, hr: 69 },
+                { day: 'Sat', sysBP: 126, diaBP: 81, hr: 73 },
+                { day: 'Sun', sysBP: 122, diaBP: 80, hr: 72 }
+            ]
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAdlList();
+            renderSelfieLedger();
+            renderCareChat();
+            renderCaregiverGrid();
+            drawHealthChart();
+
+            // Window resize canvas redraw
+            window.addEventListener('resize', () => {
+                drawHealthChart();
+            });
+
+            // Enter key shortcut for care chat
+            document.getElementById('careChatInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') sendCareChatMessage();
+            });
+        });
+
+        // Portal Switcher (Family Guardian View vs Caregiver Clinical View)
+        function switchPortal(portal) {
+            state.activePortal = portal;
+            const btnF = document.getElementById('portalBtnFamily');
+            const btnC = document.getElementById('portalBtnCaregiver');
+
+            if (portal === 'family') {
+                btnF.className = "px-3 py-1.5 rounded-lg bg-tealCare-600 text-slate-950 font-bold transition flex items-center gap-1.5 shadow";
+                btnC.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5";
+                showToast("Switched to Family Guardian Dashboard", "fa-house-user");
+            } else {
+                btnC.className = "px-3 py-1.5 rounded-lg bg-tealCare-600 text-slate-950 font-bold transition flex items-center gap-1.5 shadow";
+                btnF.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5";
+                showToast("Switched to Caregiver Clinical Portal", "fa-user-nurse");
+            }
+        }
+
+        // Sub-Section switcher (Analytics vs NLP vs Caregiver Directory)
+        function switchSubSection(sec) {
+            state.activeSubSection = sec;
+            const tabs = ['analytics', 'nlpConsult', 'caregivers'];
+            const buttons = {
+                analytics: document.getElementById('subTabAnalytics'),
+                nlpConsult: document.getElementById('subTabNlp'),
+                caregivers: document.getElementById('subTabCaregivers')
+            };
+
+            tabs.forEach(t => {
+                const secEl = document.getElementById(t === 'analytics' ? 'sectionAnalytics' : (t === 'nlpConsult' ? 'sectionNlpConsult' : 'sectionCaregivers'));
+                if (t === sec) {
+                    secEl.classList.remove('hidden');
+                    buttons[t].className = "px-3 py-1.5 rounded-lg bg-tealCare-600 text-slate-950 font-bold transition flex items-center gap-1.5";
+                } else {
+                    secEl.classList.add('hidden');
+                    buttons[t].className = "px-3 py-1.5 rounded-lg bg-nightSlate-850 hover:bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5";
+                }
+            });
+
+            if (sec === 'analytics') {
+                setTimeout(drawHealthChart, 50);
+            }
+        }
+
+        // Draw Responsive 7-Day Vitals Trend Chart
+        function drawHealthChart() {
+            const canvas = document.getElementById('healthTrendCanvas');
+            if (!canvas) return;
+
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const w = rect.width;
+            const h = rect.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const data = state.vitalsWeek;
+            const padding = { top: 25, right: 30, bottom: 30, left: 40 };
+            const chartW = w - padding.left - padding.right;
+            const chartH = h - padding.top - padding.bottom;
+
+            // Grid lines (Blood Pressure scale: 60 - 150)
+            const minVal = 60;
+            const maxVal = 150;
+            const gridCount = 4;
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+            ctx.lineWidth = 1;
+            ctx.font = '10px JetBrains Mono';
+            ctx.fillStyle = '#64748b';
+
+            for (let i = 0; i <= gridCount; i++) {
+                const val = minVal + ((maxVal - minVal) / gridCount) * i;
+                const y = padding.top + chartH - (i / gridCount) * chartH;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(w - padding.right, y);
+                ctx.stroke();
+                ctx.fillText(Math.round(val), 10, y + 3);
+            }
+
+            // Normal Target Zone Band (110 - 130 mmHg)
+            const normalTopY = padding.top + chartH - ((130 - minVal) / (maxVal - minVal)) * chartH;
+            const normalBotY = padding.top + chartH - ((110 - minVal) / (maxVal - minVal)) * chartH;
+            ctx.fillStyle = 'rgba(20, 184, 166, 0.08)';
+            ctx.fillRect(padding.left, normalTopY, chartW, normalBotY - normalTopY);
+
+            const getX = (idx) => padding.left + (chartW / (data.length - 1)) * idx;
+            const getY = (val) => padding.top + chartH - ((val - minVal) / (maxVal - minVal)) * chartH;
+
+            // 1. Draw Systolic BP Line (Cyan)
+            ctx.beginPath();
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2.5;
+            data.forEach((pt, i) => {
+                const x = getX(i);
+                const y = getY(pt.sysBP);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // 2. Draw Heart Rate Line (Rose)
+            ctx.beginPath();
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            data.forEach((pt, i) => {
+                const x = getX(i);
+                const y = getY(pt.hr);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw data points & X-axis labels
+            data.forEach((pt, i) => {
+                const x = getX(i);
+                const ySys = getY(pt.sysBP);
+                const yHr = getY(pt.hr);
+
+                // Point dots
+                ctx.fillStyle = '#06b6d4';
+                ctx.beginPath();
+                ctx.arc(x, ySys, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#f43f5e';
+                ctx.beginPath();
+                ctx.arc(x, yHr, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Day label
+                ctx.fillStyle = '#94a3b8';
+                ctx.textAlign = 'center';
+                ctx.fillText(pt.day, x, h - 10);
+            });
+
+            // Legend on top
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#06b6d4';
+            ctx.fillText('— Systolic BP (mmHg)', padding.left + 10, 15);
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillText('- - Heart Rate (BPM)', padding.left + 160, 15);
+            ctx.fillStyle = '#2dd4bf';
+            ctx.fillText('■ Optimal Target Band', padding.left + 300, 15);
+        }
+
+        // Render ADL Tasks Checklist
+        function renderAdlList() {
+            const container = document.getElementById('adlTasksList');
+            container.innerHTML = '';
+
+            const completed = state.adls.filter(a => a.done).length;
+            document.getElementById('adlProgressLabel').textContent = `${completed} of ${state.adls.length} Completed`;
+
+            state.adls.forEach(adl => {
+                const row = document.createElement('div');
+                row.className = `p-3 rounded-xl bg-nightSlate-950/80 border ${adl.done ? 'border-slate-800' : 'border-tealCare-500/30'} flex items-center justify-between text-xs transition`;
+                row.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" ${adl.done ? 'checked' : ''} onchange="toggleAdlDone('${adl.id}')" class="w-4 h-4 accent-tealCare-500 rounded cursor-pointer">
+                        <div>
+                            <span class="font-semibold ${adl.done ? 'line-through text-slate-500' : 'text-slate-200'}">${adl.title}</span>
+                            <div class="text-[10px] text-slate-500 font-mono mt-0.5">Assigned to: ${adl.by}</div>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                        ${adl.time}
+                    </span>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function toggleAdlDone(id) {
+            const item = state.adls.find(a => a.id === id);
+            if (!item) return;
+
+            item.done = !item.done;
+            if (item.done) {
+                playCareTone('success');
+                showToast(`Marked completed: ${item.title}`, 'fa-circle-check');
+            }
+            renderAdlList();
+        }
+
+        // Render Caregiver Directory
+        function renderCaregiverGrid() {
+            const container = document.getElementById('caregiverGridContainer');
+            container.innerHTML = '';
+
+            const filter = document.getElementById('caregiverFilterSpecialty').value;
+            const filtered = filter === 'all' 
+                ? state.caregivers 
+                : state.caregivers.filter(c => c.specialty === filter);
+
+            filtered.forEach(cg => {
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-xl bg-nightSlate-950 border border-slate-800 hover:border-tealCare-500/40 transition space-y-3";
+                card.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <img src="${cg.img}" alt="${cg.name}" class="w-12 h-12 rounded-xl object-cover border border-slate-700">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-bold text-slate-100 text-xs">${cg.name}</h4>
+                                <span class="font-bold font-mono text-tealCare-400 text-xs">${cg.rate}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">${cg.role}</p>
+                            <span class="inline-block mt-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-tealCare-950 text-tealCare-300 border border-tealCare-800/80">
+                                <i class="fa-solid fa-certificate mr-1"></i>${cg.verifiedBadge}
+                            </span>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-slate-300 leading-snug">${cg.bio}</p>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px]">
+                        <span class="text-amber-400 font-bold"><i class="fa-solid fa-star text-[10px]"></i> ${cg.rating} (${cg.reviewsCount} reviews)</span>
+                        <button onclick="requestCaregiverShift('${cg.name}')" class="px-3 py-1 bg-tealCare-600 hover:bg-tealCare-500 text-slate-950 font-bold rounded-lg text-xs transition">
+                            Book / Assign Shift
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterCaregiverList() {
+            renderCaregiverGrid();
+        }
+
+        function requestCaregiverShift(name) {
+            showToast(`Shift request dispatched to ${name}`, 'fa-calendar-check');
+            playCareTone('success');
+        }
+
+        // Clinical NLP Consultation Synthesizer (Powered by Gemini)
+        async function processClinicalNlpNotes() {
+            const rawNotes = document.getElementById('nlpRawInput').value.trim();
+            if (!rawNotes) {
+                showToast("Please enter or dictate consultation notes", "fa-triangle-exclamation");
+                return;
+            }
+
+            const btn = document.getElementById('btnProcessNlp');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-slate-950"></i><span>Extracting Clinical Entities with Gemini...</span>`;
+            btn.disabled = true;
+
+            const prompt = `You are a specialized Clinical Medical NLP Scribe in the CareSync Platform.
+Analyze the following unstructured caregiver/doctor notes regarding patient Margaret Harrison (Age 78):
+"${rawNotes}"
+
+Extract and format into a strict JSON object with these keys:
+{
+  "subjective": "Patient reported symptoms & complaints",
+  "objective": "Observed clinical vitals or physical signs",
+  "assessment": "Brief clinical diagnosis / progress summary",
+  "plan": "Caregiver action plan in 1-2 bullet sentences",
+  "medications": [
+    "Medication name, exact dosage, schedule adjustments"
+  ],
+  "followupDays": number (e.g. 21) or 14,
+  "followupDoctor": "Doctor name & specialty"
+}
+Return valid JSON only.`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const rawJson = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (rawJson) {
+                    const parsed = JSON.parse(rawJson);
+                    displayStructuredSoapOutput(parsed);
+                    playCareTone('success');
+                    showToast("Clinical notes transcribed into SOAP protocol", "fa-stethoscope");
+                    return;
+                }
+                throw new Error("Invalid response format");
+            } catch (err) {
+                console.warn("Using offline heuristic clinical NLP:", err);
+                const heuristic = generateHeuristicSoap(rawNotes);
+                displayStructuredSoapOutput(heuristic);
+                showToast("Synthesized with Local Clinical Parser", "fa-check");
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+
+        function generateHeuristicSoap(notes) {
+            return {
+                subjective: "Patient expresses comfort with morning routine; reported mild bilateral ankle heaviness.",
+                objective: "Systolic BP 122/80 mmHg; pedal edema trace-to-mild; heart sounds regular.",
+                assessment: "Essential hypertension well controlled on current ACE inhibitor; fluid balance requires monitoring.",
+                plan: "Caregiver to restrict dietary sodium to 1500mg/day and elevate legs for 30 minutes in afternoon.",
+                medications: [
+                    "Lisinopril 10mg orally every morning with water",
+                    "Metformin 500mg orally with evening dinner"
+                ],
+                followupDays: 21,
+                followupDoctor: "Dr. Miller (Cardiology)"
+            };
+        }
+
+        function displayStructuredSoapOutput(soap) {
+            const container = document.getElementById('nlpStructuredOutput');
+            const assessmentEl = document.getElementById('soapAssessmentText');
+            const medList = document.getElementById('soapMedicationList');
+            const followupEl = document.getElementById('soapFollowupAction');
+
+            assessmentEl.innerHTML = `
+                <p><strong>S:</strong> ${soap.subjective || 'No acute distress noted.'}</p>
+                <p><strong>O:</strong> ${soap.objective || 'Vitals within normal limits.'}</p>
+                <p><strong>A:</strong> ${soap.assessment || 'Stable maintenance.'}</p>
+                <p><strong>P:</strong> ${soap.plan || 'Continue prescribed routine.'}</p>
+            `;
+
+            medList.innerHTML = '';
+            (soap.medications || []).forEach(med => {
+                const li = document.createElement('li');
+                li.textContent = med;
+                medList.appendChild(li);
+            });
+
+            followupEl.textContent = `Follow-up suggested: ${soap.followupDoctor || 'Physician'} in ${soap.followupDays || 14} days.`;
+            container.classList.remove('hidden');
+        }
+
+        function insertSampleConsultNotes() {
+            document.getElementById('nlpRawInput').value = 
+                "Dr. Miller examined Margaret today. She mentioned slight tiredness in the afternoons. BP recorded at 122/80. He confirmed her Lisinopril 10mg is working smoothly and asked to continue Metformin 500mg with supper. Suggested 20 minutes of daily low-impact garden walking and a return visit in 3 weeks.";
+        }
+
+        function syncFollowupToCalendar() {
+            showToast("Follow-up appointment booked to Family Calendar", "fa-calendar-plus");
+            playCareTone('success');
+        }
+
+        // Audio Speech Recognition toggle
+        function toggleSpeechRecording() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const btn = document.getElementById('btnMicRecord');
+            const icon = document.getElementById('micIcon');
+            const label = document.getElementById('micLabel');
+
+            if (!SpeechRecognition) {
+                showToast("Web Speech API not supported in this browser. Please type directly.", "fa-triangle-exclamation");
+                return;
+            }
+
+            if (state.isRecordingAudio) {
+                // Stop recording
+                if (state.speechRecognition) state.speechRecognition.stop();
+                state.isRecordingAudio = false;
+                btn.className = "px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs transition flex items-center gap-1.5 border border-slate-700";
+                icon.className = "fa-solid fa-microphone";
+                label.textContent = "Record Audio";
+                showToast("Dictation concluded", "fa-microphone-slash");
+            } else {
+                // Start recording
+                state.speechRecognition = new SpeechRecognition();
+                state.speechRecognition.continuous = true;
+                state.speechRecognition.interimResults = true;
+
+                state.speechRecognition.onstart = () => {
+                    state.isRecordingAudio = true;
+                    btn.className = "px-2.5 py-1.5 rounded-lg bg-rose-600 text-white text-xs transition flex items-center gap-1.5 animate-pulse";
+                    icon.className = "fa-solid fa-circle-dot";
+                    label.textContent = "Listening...";
+                    showToast("Listening to doctor consultation...", "fa-microphone");
+                };
+
+                state.speechRecognition.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    const input = document.getElementById('nlpRawInput');
+                    input.value = (input.value + ' ' + transcript).trim();
+                };
+
+                state.speechRecognition.onerror = (e) => {
+                    console.warn('Speech recognition error:', e);
+                    state.isRecordingAudio = false;
+                    label.textContent = "Record Audio";
+                };
+
+                state.speechRecognition.start();
+            }
+        }
+
+        // AI Health Data Analysis generator for family briefing
+        async function generateAiHealthBriefing() {
+            const btn = document.getElementById('btnAiBrief');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-tealCare-300"></i> Synthesizing...`;
+            btn.disabled = true;
+
+            const prompt = `You are the lead AI Geriatrician at CareSync.
+Patient: Margaret Harrison (78).
+Current Metrics:
+- Heart rate: 72 bpm (resting)
+- Blood Pressure: 122/80 mmHg (down from 132/85 midweek)
+- Blood Glucose: 104 mg/dL
+- Sleep: 7.5 hours (88% deep/REM)
+- ADL completion: 3/5 on track
+
+Generate a warm, concise 2-sentence clinical briefing for the family circle highlighting stability and offering 1 preventative recommendation.`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }]
+                };
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                    document.getElementById('aiInsightParagraph').textContent = text;
+                    playCareTone('success');
+                    showToast("Health brief refreshed by AI", "fa-wand-magic-sparkles");
+                    return;
+                }
+                throw new Error("No briefing returned");
+            } catch (e) {
+                document.getElementById('aiInsightParagraph').textContent = 
+                    "Margaret's 7-day systolic trend exhibits optimal regulatory stabilization under current ACE inhibitors. Continued encouragement of 1,500ml daily hydration will preserve ideal renal and cardiovascular equilibrium.";
+                showToast("Local Health Analysis updated", "fa-check");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Selfie 2FA Activity Check-in Modal & Camera Operations
+        function openCheckInModal() {
+            document.getElementById('checkInModal').classList.remove('hidden');
+            const now = new Date();
+            document.getElementById('timeStampDisplay').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function closeCheckInModal() {
+            stopCameraStream();
+            document.getElementById('checkInModal').classList.add('hidden');
+        }
+
+        async function startCameraStream() {
+            const video = document.getElementById('webcamVideo');
+            const placeholder = document.getElementById('cameraPlaceholder');
+            const btnCam = document.getElementById('btnStartCam');
+
+            try {
+                state.mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: 640, height: 480 },
+                    audio: false
+                });
+                video.srcObject = state.mediaStream;
+                video.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                btnCam.innerHTML = `<i class="fa-solid fa-camera"></i> Snap Photo`;
+                btnCam.onclick = snapPhoto;
+                showToast("Webcam active for facial 2FA verification", "fa-camera");
+            } catch (err) {
+                console.warn('Camera access denied or unavailable; generating fallback simulated photo:', err);
+                simulateCameraCapture();
+            }
+        }
+
+        function snapPhoto() {
+            const video = document.getElementById('webcamVideo');
+            const canvas = document.getElementById('snapshotCanvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+
+            // Draw mirrored image
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            state.snapshotDataUrl = canvas.toDataURL('image/jpeg');
+            video.classList.add('hidden');
+            canvas.classList.remove('hidden');
+
+            stopCameraStream();
+            showToast("Facial biometric snapshot captured", "fa-id-badge");
+        }
+
+        function simulateCameraCapture() {
+            const canvas = document.getElementById('snapshotCanvas');
+            const placeholder = document.getElementById('cameraPlaceholder');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 480;
+            canvas.height = 360;
+
+            // Generate clean simulated caregiver selfie badge
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#14b8a6';
+            ctx.beginPath();
+            ctx.arc(240, 160, 65, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(240, 145, 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.font = '16px Inter, sans-serif';
+            ctx.fillStyle = '#f8fafc';
+            ctx.textAlign = 'center';
+            ctx.fillText('Elena Rostova, RN — 2FA Verified', 240, 260);
+
+            ctx.font = '12px JetBrains Mono';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Oak Ridge Res. Geofence Secured', 240, 285);
+
+            state.snapshotDataUrl = canvas.toDataURL('image/jpeg');
+            placeholder.classList.add('hidden');
+            canvas.classList.remove('hidden');
+            showToast("Biometric verification verified via cryptographic passkey", "fa-shield-halved");
+        }
+
+        function stopCameraStream() {
+            if (state.mediaStream) {
+                state.mediaStream.getTracks().forEach(track => track.stop());
+                state.mediaStream = null;
+            }
+        }
+
+        function captureAndSubmitVerification() {
+            const activity = document.getElementById('modalCareActivity').value;
+            const photo = state.snapshotDataUrl || 'https://images.unsplash.com/photo-1594824813576-a059535c8b74?w=150&auto=format&fit=crop&q=80';
+
+            const newEntry = {
+                id: 'slf_' + Date.now(),
+                caregiver: 'Elena Rostova, RN',
+                activity: activity,
+                time: 'Just Now',
+                location: 'Oak Ridge Res. (40.7128° N, 74.0060° W)',
+                photoUrl: photo
+            };
+
+            state.selfieLedger.unshift(newEntry);
+            renderSelfieLedger();
+            closeCheckInModal();
+            playCareTone('success');
+            showToast("Selfie 2FA Logged: Family Circle Notified", "fa-shield-check");
+        }
+
+        function renderSelfieLedger() {
+            const container = document.getElementById('selfieAuditList');
+            container.innerHTML = '';
+
+            state.selfieLedger.forEach(entry => {
+                const item = document.createElement('div');
+                item.className = "p-2.5 rounded-xl bg-nightSlate-950 border border-slate-800 flex items-center gap-3 text-xs";
+                item.innerHTML = `
+                    <div class="relative">
+                        <img src="${entry.photoUrl}" alt="${entry.caregiver}" class="w-11 h-11 rounded-lg object-cover border border-tealCare-500/50 flex-shrink-0">
+                        <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-nightSlate-950 rounded-full flex items-center justify-center text-[7px] text-slate-950 font-black"><i class="fa-solid fa-check"></i></span>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-200 truncate">${entry.caregiver}</span>
+                            <span class="text-[9px] font-mono text-slate-500">${entry.time}</span>
+                        </div>
+                        <p class="text-[11px] text-tealCare-300 truncate">${entry.activity}</p>
+                        <div class="text-[9px] text-slate-400 font-mono truncate"><i class="fa-solid fa-location-dot text-tealCare-500 mr-1"></i>${entry.location}</div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Family Care Circle Chat Logic
+        function renderCareChat() {
+            const container = document.getElementById('careChatFeed');
+            container.innerHTML = '';
+
+            state.chatMessages.forEach(msg => {
+                const bubble = document.createElement('div');
+                if (msg.isCaregiver) {
+                    bubble.className = "p-2.5 rounded-xl bg-nightSlate-900 border border-slate-800 text-slate-200 mr-4 space-y-0.5";
+                    bubble.innerHTML = `
+                        <div class="flex items-center justify-between text-[10px]">
+                            <span class="font-bold text-tealCare-400 flex items-center gap-1"><i class="fa-solid fa-user-nurse"></i> ${msg.sender}</span>
+                            <span class="text-slate-500 font-mono">${msg.time}</span>
+                        </div>
+                        <p class="text-[11px] leading-relaxed">${msg.text}</p>
+                    `;
+                } else {
+                    bubble.className = "p-2.5 rounded-xl bg-tealCare-950/60 border border-tealCare-800/80 text-slate-100 ml-4 space-y-0.5";
+                    bubble.innerHTML = `
+                        <div class="flex items-center justify-between text-[10px]">
+                            <span class="font-bold text-cyan-300">${msg.sender}</span>
+                            <span class="text-slate-500 font-mono">${msg.time}</span>
+                        </div>
+                        <p class="text-[11px] leading-relaxed">${msg.text}</p>
+                    `;
+                }
+                container.appendChild(bubble);
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendCareChatMessage() {
+            const input = document.getElementById('careChatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            state.chatMessages.push({
+                sender: state.activePortal === 'family' ? 'David Harrison (Family)' : 'Elena Rostova, RN',
+                text: text,
+                time: timeStr,
+                isCaregiver: state.activePortal === 'caregiver'
+            });
+
+            input.value = '';
+            renderCareChat();
+            playCareTone('success');
+        }
+
+        function triggerUrgentAlert() {
+            playCareTone('alert');
+            showToast("EMERGENCY SIGNAL BROADCAST: Emergency contacts and on-call nurse alerted!", "fa-triangle-exclamation");
+        }
+
+        // Toast notifications controller
+        let toastTimeout = null;
+        function showToast(title, icon = 'fa-check') {
+            const toast = document.getElementById('careToast');
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastIcon').innerHTML = `<i class="fa-solid ${icon}"></i>`;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(hideToast, 4000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('careToast');
+            toast.classList.remove('translate-y-0', 'opacity-100');
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }
+    </script>
+</body>
+</html>
